@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
+#include "test_complex.h"
 #include "test_status.h"
 
 
@@ -22,9 +23,10 @@ main(void)
     int failures = 0;
 
     failures += cmocka_run_group_tests(numc_status_tests, NULL, NULL);
+    failures += cmocka_run_group_tests(numc_complex_tests, NULL, NULL);
 
     /* Ajoute ici tes prochains groupes de tests, ex. :
-     * failures += cmocka_run_group_tests(numc_complex_tests, NULL, NULL);
+     * failures += cmocka_run_group_tests(numc_lin_alg_tests, NULL, NULL);
      */
 
     return failures;
