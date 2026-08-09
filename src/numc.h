@@ -18,6 +18,7 @@
 #define NUMC_H
 
 #include "complex.h"
+#include "multilinear.h"
 #include "numc_status.h"
 #include "numc_version.h"
 
