@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "numc_status.h"
 
 /*
@@ -10,20 +11,28 @@
  * numc_*_from() COPIES the data given by the caller into a freshly
  * allocated buffer. The caller keeps ownership of what they passed in
  * and must call numc_*_destroy() on the returned object when done.
+ *
+ * Each object embeds a `magic` tag stamped by numc_*_from() and cleared
+ * by numc_*_destroy(). numc_*_is_valid() requires the tag to match, so a
+ * zeroed, uninitialised or destroyed object is reported as invalid instead
+ * of being dereferenced blindly.
  */
 
 typedef struct numc_vector_t {
+    uint32_t magic; /* tag set by numc_vector_from(), cleared by destroy */
     size_t size;
     double *data;
 } numc_vector_t;
 
 typedef struct numc_matrix_t {
+    uint32_t magic; /* tag set by numc_matrix_from(), cleared by destroy */
     size_t rows;
     size_t cols;
     double *data;
 } numc_matrix_t;
 
 typedef struct numc_tensor_t {
+    uint32_t magic; /* tag set by numc_tensor_from(), cleared by destroy */
     size_t order;
     size_t *dimensions; /* length = order, owned copy */
     size_t *strides;    /* length = order, computed at creation */
@@ -40,7 +49,7 @@ void numc_vector_destroy(numc_vector_t *v);
 void numc_matrix_destroy(numc_matrix_t *m);
 void numc_tensor_destroy(numc_tensor_t *t);
 
-/* Validity checks (data != NULL) */
+/* Validity checks: tag stamped by numc_*_from(), cleared by numc_*_destroy() */
 bool numc_vector_is_valid(const numc_vector_t *v);
 bool numc_matrix_is_valid(const numc_matrix_t *m);
 bool numc_tensor_is_valid(const numc_tensor_t *t);

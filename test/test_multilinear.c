@@ -131,6 +131,53 @@ test_vector_scale(void** state)
 }
 
 
+static void
+test_vector_zeroed_is_invalid(void** state)
+{
+    (void) state;
+    numc_vector_t v = {0};
+    assert_false(numc_vector_is_valid(&v));
+
+    double x;
+    assert_int_equal(numc_vector_get(&v, 0, &x), NUMC_ERR_INVALID_ARG);
+
+    numc_vector_t a, out;
+    double da[] = {1.0, 2.0, 3.0};
+    numc_vector_from(3, da, &a);
+    assert_int_equal(numc_vector_add(v, a, &out), NUMC_ERR_INVALID_ARG);
+    numc_vector_destroy(&a);
+}
+
+
+static void
+test_matrix_zeroed_is_invalid(void** state)
+{
+    (void) state;
+    numc_matrix_t m = {0};
+    assert_false(numc_matrix_is_valid(&m));
+
+    double x;
+    assert_int_equal(numc_matrix_get(&m, 0, 0, &x), NUMC_ERR_INVALID_ARG);
+}
+
+
+static void
+test_vector_use_after_destroy_rejected(void** state)
+{
+    (void) state;
+    double d[] = {1.0, 2.0};
+    numc_vector_t v;
+    numc_vector_from(2, d, &v);
+    numc_vector_destroy(&v);
+
+    assert_false(numc_vector_is_valid(&v));
+
+    double x;
+    assert_int_equal(numc_vector_get(&v, 0, &x), NUMC_ERR_INVALID_ARG);
+    assert_int_equal(numc_vector_set(&v, 0, 3.0), NUMC_ERR_INVALID_ARG);
+}
+
+
 /* ---- numc_matrix_t ---- */
 
 static void
@@ -372,6 +419,9 @@ static const struct CMUnitTest numc_multilinear_tests[] = {
     cmocka_unit_test(test_vector_dot),
     cmocka_unit_test(test_vector_norm),
     cmocka_unit_test(test_vector_scale),
+    cmocka_unit_test(test_vector_zeroed_is_invalid),
+    cmocka_unit_test(test_matrix_zeroed_is_invalid),
+    cmocka_unit_test(test_vector_use_after_destroy_rejected),
     cmocka_unit_test(test_matrix_mul),
     cmocka_unit_test(test_matrix_mul_dim_mismatch),
     cmocka_unit_test(test_matrix_transpose),
