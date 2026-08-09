@@ -17,6 +17,7 @@
 #ifndef NUMC_H
 #define NUMC_H
 
+#include "complex.h"
 #include "numc_status.h"
 #include "numc_version.h"
 
