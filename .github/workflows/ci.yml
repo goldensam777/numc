@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcmocka-dev valgrind
+
+      - name: Build static library
+        run: make all CC=${{ matrix.compiler }}
+
+      - name: Run tests
+        run: make tests CC=${{ matrix.compiler }}
+
+      - name: Valgrind leak check
+        run: make valgrind CC=${{ matrix.compiler }}
+
+      - name: Show valgrind log on failure
+        if: failure()
+        run: cat log/valgrind.log

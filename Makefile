@@ -159,9 +159,10 @@ $(SRCDIR)/numc.h: $(PUBLIC_HEADERS) FORCE
 
 
 # Rule for object binaries compilation
+# (LIBS are only needed at link time, see the `tests` rule)
 $(LIBDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@echo -en "$(BROWN)CC $(END_COLOR)";
-	$(CC) -c $< -o $@ $(DEBUG) $(CFLAGS) $(LIBS)
+	$(CC) -c $< -o $@ $(DEBUG) $(CFLAGS)
 
 
 # Rule for link and generate the static library
@@ -184,11 +185,14 @@ tests: $(SRCDIR)/numc.h $(BINDIR)/$(LIBRARY)
 
 
 # Rule for run valgrind tool over the tests
+# --error-exitcode=1 makes the target fail when valgrind reports a leak,
+# so CI can rely on its exit status.
 valgrind: tests
 	valgrind \
 		--track-origins=yes \
 		--leak-check=full \
 		--leak-resolution=high \
+		--error-exitcode=1 \
 		--log-file=$(LOGDIR)/$@.log \
 		$(BINDIR)/$(TEST_BINARY)
 	@echo -en "\nCheck the log file: $(LOGDIR)/$@.log\n"
