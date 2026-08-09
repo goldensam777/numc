@@ -167,6 +167,96 @@ numc_complex_log(numc_complex_t z, numc_complex_t* out)
 
 
 numc_status_t
+numc_complex_cpow(numc_complex_t base, numc_complex_t exp, numc_complex_t* out)
+{
+    if (out == NULL) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+
+    if (numc_complex_is_zero(base)) {
+        if (numc_complex_is_zero(exp)) {
+            /* 0^0 = 1, standard convention. */
+            *out = numc_complex_one();
+            return NUMC_OK;
+        }
+        if (exp.re > 0.0) {
+            *out = numc_complex_zero();
+            return NUMC_OK;
+        }
+        numc_set_error(NUMC_ERR_DOMAIN, "0^w undefined for re(w) <= 0");
+        return NUMC_ERR_DOMAIN;
+    }
+
+    /* z^w = exp(w * log(z)) for z != 0. */
+    numc_complex_t log_base;
+    numc_complex_log(base, &log_base); /* base != 0, cannot fail here */
+    *out = numc_complex_exp(numc_complex_mul(exp, log_base));
+    return NUMC_OK;
+}
+
+
+numc_complex_t
+numc_complex_sin(numc_complex_t z)
+{
+    numc_complex_t out = {
+        sin(z.re) * cosh(z.im),
+        cos(z.re) * sinh(z.im),
+    };
+    return out;
+}
+
+
+numc_complex_t
+numc_complex_cos(numc_complex_t z)
+{
+    numc_complex_t out = {
+        cos(z.re) * cosh(z.im),
+        -sin(z.re) * sinh(z.im),
+    };
+    return out;
+}
+
+
+numc_status_t
+numc_complex_tan(numc_complex_t z, numc_complex_t* out)
+{
+    if (out == NULL) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+
+    numc_complex_t c = numc_complex_cos(z);
+    if (numc_complex_is_zero(c)) {
+        numc_set_error(NUMC_ERR_DOMAIN, "tan has a pole at this point");
+        return NUMC_ERR_DOMAIN;
+    }
+
+    return numc_complex_div(numc_complex_sin(z), c, out);
+}
+
+
+numc_complex_t
+numc_complex_sinh(numc_complex_t z)
+{
+    numc_complex_t out = {
+        sinh(z.re) * cos(z.im),
+        cosh(z.re) * sin(z.im),
+    };
+    return out;
+}
+
+
+numc_complex_t
+numc_complex_cosh(numc_complex_t z)
+{
+    numc_complex_t out = {
+        cosh(z.re) * cos(z.im),
+        sinh(z.re) * sin(z.im),
+    };
+    return out;
+}
+
+
+numc_status_t
 numc_complex_div(numc_complex_t a, numc_complex_t b, numc_complex_t* out)
 {
     if (out == NULL) {

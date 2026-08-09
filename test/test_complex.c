@@ -361,6 +361,119 @@ test_log_null_out(void** state)
 }
 
 
+static void
+test_cpow_basic(void** state)
+{
+    (void) state;
+    /* i^2 = -1 */
+    numc_complex_t out;
+    numc_status_t st = numc_complex_cpow(numc_complex_i(), numc_complex_from(2.0, 0.0), &out);
+    assert_int_equal(st, NUMC_OK);
+    assert_true(numc_complex_equal(out, numc_complex_from(-1.0, 0.0), 1e-9));
+}
+
+
+static void
+test_cpow_zero_zero(void** state)
+{
+    (void) state;
+    numc_complex_t out;
+    assert_int_equal(numc_complex_cpow(numc_complex_zero(), numc_complex_zero(), &out), NUMC_OK);
+    assert_complex_equal(out, 1.0, 0.0);
+}
+
+
+static void
+test_cpow_zero_positive_exp(void** state)
+{
+    (void) state;
+    numc_complex_t out;
+    numc_status_t st = numc_complex_cpow(numc_complex_zero(), numc_complex_from(2.0, 0.0), &out);
+    assert_int_equal(st, NUMC_OK);
+    assert_complex_equal(out, 0.0, 0.0);
+}
+
+
+static void
+test_cpow_zero_domain_error(void** state)
+{
+    (void) state;
+    numc_complex_t out;
+    numc_status_t st = numc_complex_cpow(numc_complex_zero(), numc_complex_from(-1.0, 0.0), &out);
+    assert_int_equal(st, NUMC_ERR_DOMAIN);
+}
+
+
+static void
+test_cpow_null_out(void** state)
+{
+    (void) state;
+    numc_status_t st = numc_complex_cpow(numc_complex_one(), numc_complex_one(), NULL);
+    assert_int_equal(st, NUMC_ERR_INVALID_ARG);
+}
+
+
+static void
+test_sin_cos_pythagorean_identity(void** state)
+{
+    (void) state;
+    /* sin^2(z) + cos^2(z) = 1 holds for complex z too */
+    numc_complex_t z = numc_complex_from(0.7, 1.3);
+    numc_complex_t s = numc_complex_sin(z);
+    numc_complex_t c = numc_complex_cos(z);
+    numc_complex_t id = numc_complex_add(numc_complex_mul(s, s), numc_complex_mul(c, c));
+    assert_true(numc_complex_equal(id, numc_complex_one(), 1e-9));
+}
+
+
+static void
+test_sin_real_matches_libm(void** state)
+{
+    (void) state;
+    numc_complex_t z = numc_complex_sin(numc_complex_from(1.0, 0.0));
+    assert_complex_equal(z, sin(1.0), 0.0);
+}
+
+
+static void
+test_tan_basic(void** state)
+{
+    (void) state;
+    numc_complex_t out;
+    numc_status_t st = numc_complex_tan(numc_complex_from(1.0, 0.0), &out);
+    assert_int_equal(st, NUMC_OK);
+    assert_complex_equal(out, tan(1.0), 0.0);
+}
+
+
+static void
+test_tan_near_pole_is_large(void** state)
+{
+    (void) state;
+    /* cos(pi/2) is never exactly 0.0 in floating point (M_PI/2 rounding),
+     * so the NUMC_ERR_DOMAIN branch only fires on an exact algebraic zero.
+     * Near a pole, tan legitimately blows up instead: check the magnitude
+     * explodes rather than expecting a domain error that won't trigger. */
+    numc_complex_t out;
+    numc_status_t st = numc_complex_tan(numc_complex_from(M_PI / 2.0, 0.0), &out);
+    assert_int_equal(st, NUMC_OK);
+    assert_true(numc_complex_abs(out) > 1e10);
+}
+
+
+static void
+test_sinh_cosh_identity(void** state)
+{
+    (void) state;
+    /* cosh^2(z) - sinh^2(z) = 1 */
+    numc_complex_t z = numc_complex_from(0.4, -0.9);
+    numc_complex_t sh = numc_complex_sinh(z);
+    numc_complex_t ch = numc_complex_cosh(z);
+    numc_complex_t id = numc_complex_sub(numc_complex_mul(ch, ch), numc_complex_mul(sh, sh));
+    assert_true(numc_complex_equal(id, numc_complex_one(), 1e-9));
+}
+
+
 static const struct CMUnitTest numc_complex_tests[] = {
     cmocka_unit_test(test_from),
     cmocka_unit_test(test_add),
@@ -393,6 +506,16 @@ static const struct CMUnitTest numc_complex_tests[] = {
     cmocka_unit_test(test_log_is_exp_inverse),
     cmocka_unit_test(test_log_zero),
     cmocka_unit_test(test_log_null_out),
+    cmocka_unit_test(test_cpow_basic),
+    cmocka_unit_test(test_cpow_zero_zero),
+    cmocka_unit_test(test_cpow_zero_positive_exp),
+    cmocka_unit_test(test_cpow_zero_domain_error),
+    cmocka_unit_test(test_cpow_null_out),
+    cmocka_unit_test(test_sin_cos_pythagorean_identity),
+    cmocka_unit_test(test_sin_real_matches_libm),
+    cmocka_unit_test(test_tan_basic),
+    cmocka_unit_test(test_tan_near_pole_is_large),
+    cmocka_unit_test(test_sinh_cosh_identity),
 };
 
 

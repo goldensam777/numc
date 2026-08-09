@@ -59,6 +59,27 @@ numc_complex_t numc_complex_exp(numc_complex_t z);
 numc_status_t numc_complex_log(numc_complex_t z, numc_complex_t* out);
 
 /*
+ * z^w for complex w. Generalizes numc_complex_pow (integer exponent).
+ * Returns NUMC_ERR_DOMAIN if base == 0 and (exp == 0 is the only defined case: 0^0 = 1).
+ * Returns NUMC_ERR_INVALID_ARG if out is NULL.
+ */
+numc_status_t numc_complex_cpow(numc_complex_t base, numc_complex_t exp, numc_complex_t* out);
+
+/* Trigonometric (total: sin, cos never fail) */
+numc_complex_t numc_complex_sin(numc_complex_t z);
+numc_complex_t numc_complex_cos(numc_complex_t z);
+
+/*
+ * tan(z) = sin(z) / cos(z). Returns NUMC_ERR_DOMAIN if cos(z) == 0
+ * (poles at z = pi/2 + k*pi on the real axis).
+ */
+numc_status_t numc_complex_tan(numc_complex_t z, numc_complex_t* out);
+
+/* Hyperbolic (total: never fail) */
+numc_complex_t numc_complex_sinh(numc_complex_t z);
+numc_complex_t numc_complex_cosh(numc_complex_t z);
+
+/*
  * a / b. Returns NUMC_ERR_DOMAIN if b == 0.
  * Returns NUMC_ERR_INVALID_ARG if out is NULL.
  */
