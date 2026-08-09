@@ -1,17 +1,10 @@
 /*
- * ============================================================================
+ * main.c
  *
- *       Filename:  main.c
+ * Execution des tests de numc, via cmocka.
  *
- *    Description:  Main execution of the tests using cmocka
- *
- *        Created:  04/28/2016 19:21:37
- *       Compiler:  gcc
- *
- *         Author:  Gustavo Pantuza
- *   Organization:  Software Community
- *
- * ============================================================================
+ * Chaque module de tests expose un tableau `const struct CMUnitTest`
+ * (ex. numc_status_tests). Ajoute son groupe ici au fur et a mesure.
  */
 
 
@@ -20,37 +13,19 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
-
-/* include here your files that contain test functions */
-
+#include "test_status.h"
 
 
-
-/* A test case that does nothing and succeeds. */
-static void null_test_success(void **state) {
-
-    /**
-     * If you want to know how to use cmocka, please refer to:
-     * https://api.cmocka.org/group__cmocka__asserts.html
-     */
-    (void) state; /* unused */
-}
-
-
-/**
- * Test runner function
- */
 int
-main(void) {
+main(void)
+{
+    int failures = 0;
 
-    /**
-     * Insert here your test functions
+    failures += cmocka_run_group_tests(numc_status_tests, NULL, NULL);
+
+    /* Ajoute ici tes prochains groupes de tests, ex. :
+     * failures += cmocka_run_group_tests(numc_complex_tests, NULL, NULL);
      */
-    const struct CMUnitTest tests[] = {
-        cmocka_unit_test(null_test_success),
-    };
 
-
-    /* Run the tests */
-    return cmocka_run_group_tests(tests, NULL, NULL);
+    return failures;
 }

@@ -31,6 +31,9 @@
 # Debug files
 *.dSYM/
 
+# JetBrains IDEs (CLion, ...)
+.idea/
+
 # Project binary files
 /bin/*
 !/bin/.gitkeep
