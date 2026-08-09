@@ -195,7 +195,7 @@ test_pow_null_out(void** state)
 }
 
 
-const struct CMUnitTest numc_complex_tests[] = {
+static const struct CMUnitTest numc_complex_tests[] = {
     cmocka_unit_test(test_from),
     cmocka_unit_test(test_add),
     cmocka_unit_test(test_sub),
@@ -213,3 +213,10 @@ const struct CMUnitTest numc_complex_tests[] = {
     cmocka_unit_test(test_pow_zero_negative),
     cmocka_unit_test(test_pow_null_out),
 };
+
+
+int
+numc_complex_tests_run(void)
+{
+    return cmocka_run_group_tests(numc_complex_tests, NULL, NULL);
+}

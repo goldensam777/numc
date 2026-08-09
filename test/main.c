@@ -22,11 +22,11 @@ main(void)
 {
     int failures = 0;
 
-    failures += cmocka_run_group_tests(numc_status_tests, NULL, NULL);
-    failures += cmocka_run_group_tests(numc_complex_tests, NULL, NULL);
+    failures += numc_status_tests_run();
+    failures += numc_complex_tests_run();
 
     /* Ajoute ici tes prochains groupes de tests, ex. :
-     * failures += cmocka_run_group_tests(numc_lin_alg_tests, NULL, NULL);
+     * failures += numc_lin_alg_tests_run();
      */
 
     return failures;

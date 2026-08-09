@@ -63,10 +63,17 @@ test_status_string_unknown_code(void** state)
 }
 
 
-const struct CMUnitTest numc_status_tests[] = {
+static const struct CMUnitTest numc_status_tests[] = {
     cmocka_unit_test(test_last_status_defaults_to_ok),
     cmocka_unit_test(test_set_error_records_status),
     cmocka_unit_test(test_ok_resets_last_error),
     cmocka_unit_test(test_status_string_known_codes),
     cmocka_unit_test(test_status_string_unknown_code),
 };
+
+
+int
+numc_status_tests_run(void)
+{
+    return cmocka_run_group_tests(numc_status_tests, NULL, NULL);
+}

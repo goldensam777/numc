@@ -9,11 +9,9 @@
 #define TEST_COMPLEX_H
 
 
-#include <cmocka.h>
-
-
-/* Liste des tests du module complex (voir test_complex.c) */
-extern const struct CMUnitTest numc_complex_tests[];
+/* Execute le groupe de tests du module complex.
+ * Retourne le nombre de tests echoues. */
+int numc_complex_tests_run(void);
 
 
 #endif /* TEST_COMPLEX_H */

@@ -9,11 +9,9 @@
 #define TEST_STATUS_H
 
 
-#include <cmocka.h>
-
-
-/* Liste des tests du module numc_status (voir test_status.c) */
-extern const struct CMUnitTest numc_status_tests[];
+/* Execute le groupe de tests du module numc_status.
+ * Retourne le nombre de tests echoues. */
+int numc_status_tests_run(void);
 
 
 #endif /* TEST_STATUS_H */
