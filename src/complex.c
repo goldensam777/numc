@@ -13,6 +13,38 @@ numc_complex_from(double re, double im)
 
 
 numc_complex_t
+numc_complex_from_polar(double r, double theta)
+{
+    numc_complex_t z = { r * cos(theta), r * sin(theta) };
+    return z;
+}
+
+
+numc_complex_t
+numc_complex_zero(void)
+{
+    numc_complex_t z = { 0.0, 0.0 };
+    return z;
+}
+
+
+numc_complex_t
+numc_complex_one(void)
+{
+    numc_complex_t z = { 1.0, 0.0 };
+    return z;
+}
+
+
+numc_complex_t
+numc_complex_i(void)
+{
+    numc_complex_t z = { 0.0, 1.0 };
+    return z;
+}
+
+
+numc_complex_t
 numc_complex_add(numc_complex_t a, numc_complex_t b)
 {
     numc_complex_t z = { a.re + b.re, a.im + b.im };
@@ -60,6 +92,77 @@ double
 numc_complex_arg(numc_complex_t z)
 {
     return atan2(z.im, z.re);
+}
+
+
+bool
+numc_complex_is_zero(numc_complex_t z)
+{
+    return z.re == 0.0 && z.im == 0.0;
+}
+
+
+bool
+numc_complex_is_finite(numc_complex_t z)
+{
+    return isfinite(z.re) && isfinite(z.im);
+}
+
+
+bool
+numc_complex_equal(numc_complex_t a, numc_complex_t b, double epsilon)
+{
+    return fabs(a.re - b.re) <= epsilon && fabs(a.im - b.im) <= epsilon;
+}
+
+
+numc_complex_t
+numc_complex_sqrt(numc_complex_t z)
+{
+    /* Standard stable formula: derive from |z| and re(z) rather than
+     * from arg(z)/2, avoiding the extra trig call and its rounding. */
+    double m = numc_complex_abs(z);
+
+    if (m == 0.0) {
+        return numc_complex_zero();
+    }
+
+    double re = sqrt((m + z.re) / 2.0);
+    double im = sqrt((m - z.re) / 2.0);
+
+    if (z.im < 0.0) {
+        im = -im;
+    }
+
+    numc_complex_t out = { re, im };
+    return out;
+}
+
+
+numc_complex_t
+numc_complex_exp(numc_complex_t z)
+{
+    double scale = exp(z.re);
+    numc_complex_t out = { scale * cos(z.im), scale * sin(z.im) };
+    return out;
+}
+
+
+numc_status_t
+numc_complex_log(numc_complex_t z, numc_complex_t* out)
+{
+    if (out == NULL) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+
+    if (numc_complex_is_zero(z)) {
+        numc_set_error(NUMC_ERR_DOMAIN, "log(0) is undefined");
+        return NUMC_ERR_DOMAIN;
+    }
+
+    out->re = log(numc_complex_abs(z));
+    out->im = numc_complex_arg(z);
+    return NUMC_OK;
 }
 
 
