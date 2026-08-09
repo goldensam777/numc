@@ -67,6 +67,8 @@ numc_status_string(numc_status_t status)
         case NUMC_ERR_DIVERGENCE:     return "iterative algorithm diverged";
         case NUMC_ERR_NOT_IMPLEMENTED: return "not implemented";
         case NUMC_ERR_INTERNAL:       return "internal error";
+        case NUMC_ERR_DIM_MISMATCH:   return "dimension mismatch";
+        case NUMC_ERR_OUT_OF_BOUNDS:  return "index out of bounds";
         default:                      return "unknown status";
     }
 }

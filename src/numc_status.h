@@ -34,6 +34,8 @@ typedef enum numc_status
     NUMC_ERR_DIVERGENCE,         /* algorithme iteratif qui ne converge pas */
     NUMC_ERR_NOT_IMPLEMENTED,    /* fonctionnalite prevue mais non ecrite */
     NUMC_ERR_INTERNAL,           /* erreur interne inattendue */
+    NUMC_ERR_DIM_MISMATCH,       /* dimensions incompatibles entre operandes */
+    NUMC_ERR_OUT_OF_BOUNDS,      /* indice hors bornes */
 
 } numc_status_t;
 
