@@ -25,6 +25,10 @@ src/            code source de la librairie
     numc.h           tete principale (umbrella header)
     numc_version.h   numero de version
     numc_status.h/c  gestion d'erreur (code retour + dernier statut)
+    numc_complex.h/c      nombres complexes
+    numc_vector.h/c       vecteurs
+    numc_bilinear.h/c     matrices (futures formes bilineaires)
+    numc_tensorial.h/c    tenseurs
 test/           tests unitaires cmocka
     main.c           runner : execute tous les groupes de tests
     test_<module>.c  groupe de tests d'un module
@@ -65,8 +69,13 @@ et un groupe de tests dans `test/test_<module>.c`.
 ## Feuille de route
 
 - [x] noyau : statuts d'erreur, version, umbrella header
-- [ ] nombres complexes (`numc_complex.h`)
-- [ ] algebre lineaire : vecteurs, matrices, normes, produits scalaires
+- [x] nombres complexes (`numc_complex.h`)
+- [x] vecteurs (`numc_vector.h`) : construction, acces, add/sub, scale,
+      produit scalaire, norme
+- [x] matrices (`numc_bilinear.h`) : construction, acces, add/sub, scale,
+      produit, norme, transpose
+- [x] tenseurs (`numc_tensorial.h`) : construction, add/sub, scale,
+      contraction, norme, transpose par permutation
 - [ ] algebre bilineaire : formes bilineaires, formes quadratiques, formes hermitiennes
 - [ ] mesure et integration : quadrature numerique (Riemann, trapeze, Simpson, Gauss-Legendre)
 - [ ] probabilites et statistiques : lois usuelles, moments, Monte Carlo

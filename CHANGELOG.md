@@ -7,7 +7,34 @@ et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
-- Algebre lineaire et bilineaire (vecteurs, matrices, normes, formes bilineaires)
+### Ajoute
+
+- **Algebre multilineaire, decoupee en trois modules** :
+  - `numc_vector.h` : `numc_vector_t` (construction, acces verifie
+    `get`/`set`, `add`, `sub`, `scale`, `dot`, norme euclidienne) ;
+  - `numc_bilinear.h` : `numc_matrix_t` (construction, acces verifie
+    `get`/`set`, `add`, `sub`, `scale`, `mul`, norme de Frobenius,
+    `transpose`) ;
+  - `numc_tensorial.h` : `numc_tensor_t` (construction avec rejet des
+    dimensions nulles, `add`, `sub`, `scale`, `contract`, norme de
+    Frobenius, `transpose` par permutation).
+  - Les trois types partagent la meme convention d'ownership (les
+    `numc_*_from` copient les donnees).
+- **Nouveaux codes d'erreur** : `NUMC_ERR_DIM_MISMATCH` et
+  `NUMC_ERR_OUT_OF_BOUNDS`, messages associes dans `numc_status_string()`.
+- **Fiabilisation** : chaque objet porte un tag `magic` (pose par
+  `numc_*_from`, efface par `numc_*_destroy`) ; `numc_*_is_valid()`
+  detecte les objets non initialises ou detruits ; messages d'erreur via
+  `numc_set_error()`.
+- **Integration continue** : workflow GitHub Actions (gcc et clang) qui
+  compile, lance les tests et le controle de fuites valgrind
+  (`--error-exitcode=1`).
+- **Tests** : 66 tests unitaires (5 noyau, 41 complexes, 8 vecteurs,
+  5 matrices, 7 tenseurs).
+
+### A venir
+
+- Algebre bilineaire : formes bilineaires, formes quadratiques, formes hermitiennes
 - Mesure et integration numerique (quadrature)
 - Probabilites et statistiques (lois, moments, Monte Carlo)
 - Mecanique quantique (espaces de Hilbert, operateurs)
