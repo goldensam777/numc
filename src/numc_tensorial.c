@@ -1,13 +1,26 @@
-#include "multilinear.h"
+#include "numc_tensorial.h"
 
 #include <stdlib.h>
 #include <math.h>
 
-/* Tags stamped in the magic field by numc_*_from() and cleared by
- * numc_*_destroy(). Checked by numc_*_is_valid(). */
-#define NUMC_VECTOR_MAGIC 0x56435452u /* 'VCTR' */
-#define NUMC_MATRIX_MAGIC 0x4D545258u /* 'MTRX' */
+/* Tag stamped in the magic field by numc_tensor_from() and cleared by
+ * numc_tensor_destroy(). Checked by numc_tensor_is_valid(). */
 #define NUMC_TENSOR_MAGIC 0x54534F52u /* 'TSOR' */
+
+/* Error helpers: record a message via numc_set_error() and return the code. */
+static numc_status_t
+fail_dim_mismatch(void)
+{
+    numc_set_error(NUMC_ERR_DIM_MISMATCH, "operand dimensions do not match");
+    return NUMC_ERR_DIM_MISMATCH;
+}
+
+static numc_status_t
+fail_out_of_bounds(void)
+{
+    numc_set_error(NUMC_ERR_OUT_OF_BOUNDS, "index out of bounds");
+    return NUMC_ERR_OUT_OF_BOUNDS;
+}
 
 /* ---- internal helpers ------------------------------------------------ */
 
@@ -65,61 +78,7 @@ same_shape(size_t order_a, const size_t *dims_a, size_t order_b, const size_t *d
     return true;
 }
 
-/* Error helpers: record a message via numc_set_error() and return the code. */
-static numc_status_t
-fail_dim_mismatch(void)
-{
-    numc_set_error(NUMC_ERR_DIM_MISMATCH, "operand dimensions do not match");
-    return NUMC_ERR_DIM_MISMATCH;
-}
-
-static numc_status_t
-fail_out_of_bounds(void)
-{
-    numc_set_error(NUMC_ERR_OUT_OF_BOUNDS, "index out of bounds");
-    return NUMC_ERR_OUT_OF_BOUNDS;
-}
-
 /* ---- construction ------------------------------------------------------ */
-
-numc_status_t
-numc_vector_from(size_t size, const double *data, numc_vector_t *out)
-{
-    if (size == 0 || data == NULL || out == NULL) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    numc_vector_t v;
-    v.magic = NUMC_VECTOR_MAGIC;
-    v.size = size;
-    v.data = malloc(size * sizeof(double));
-    if (v.data == NULL) {
-        return NUMC_ERR_ALLOC;
-    }
-    for (size_t i = 0; i < size; i++) v.data[i] = data[i];
-    *out = v;
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_from(size_t rows, size_t cols, const double *data, numc_matrix_t *out)
-{
-    if (rows == 0 || cols == 0 || data == NULL || out == NULL) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    numc_matrix_t m;
-    m.magic = NUMC_MATRIX_MAGIC;
-    m.rows = rows;
-    m.cols = cols;
-    m.data = malloc(rows * cols * sizeof(double));
-    if (m.data == NULL) {
-        return NUMC_ERR_ALLOC;
-    }
-    for (size_t i = 0; i < rows * cols; i++) m.data[i] = data[i];
-    *out = m;
-    return NUMC_OK;
-}
-
 
 numc_status_t
 numc_tensor_from(size_t order, const size_t *dimensions, const double *data, numc_tensor_t *out)
@@ -150,29 +109,6 @@ numc_tensor_from(size_t order, const size_t *dimensions, const double *data, num
 /* ---- destruction / validity -------------------------------------------- */
 
 void
-numc_vector_destroy(numc_vector_t *v)
-{
-    if (v == NULL) return;
-    free(v->data);
-    v->magic = 0;
-    v->data = NULL;
-    v->size = 0;
-}
-
-
-void
-numc_matrix_destroy(numc_matrix_t *m)
-{
-    if (m == NULL) return;
-    free(m->data);
-    m->magic = 0;
-    m->data = NULL;
-    m->rows = 0;
-    m->cols = 0;
-}
-
-
-void
 numc_tensor_destroy(numc_tensor_t *t)
 {
     if (t == NULL) return;
@@ -186,151 +122,13 @@ numc_tensor_destroy(numc_tensor_t *t)
     t->order = 0;
 }
 
-
-bool
-numc_vector_is_valid(const numc_vector_t *v)
-{
-    return v != NULL && v->magic == NUMC_VECTOR_MAGIC && v->data != NULL;
-}
-
-
-bool
-numc_matrix_is_valid(const numc_matrix_t *m)
-{
-    return m != NULL && m->magic == NUMC_MATRIX_MAGIC && m->data != NULL;
-}
-
-
 bool
 numc_tensor_is_valid(const numc_tensor_t *t)
 {
     return t != NULL && t->magic == NUMC_TENSOR_MAGIC && t->data != NULL;
 }
 
-/* ---- element access ------------------------------------------------- */
-
-numc_status_t
-numc_vector_get(const numc_vector_t *v, size_t i, double *out)
-{
-    if (!numc_vector_is_valid(v) || out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (i >= v->size) return fail_out_of_bounds();
-    *out = v->data[i];
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_vector_set(numc_vector_t *v, size_t i, double val)
-{
-    if (!numc_vector_is_valid(v)) return NUMC_ERR_INVALID_ARG;
-    if (i >= v->size) return fail_out_of_bounds();
-    v->data[i] = val;
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_get(const numc_matrix_t *m, size_t i, size_t j, double *out)
-{
-    if (!numc_matrix_is_valid(m) || out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (i >= m->rows || j >= m->cols) return fail_out_of_bounds();
-    *out = m->data[i * m->cols + j];
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_set(numc_matrix_t *m, size_t i, size_t j, double val)
-{
-    if (!numc_matrix_is_valid(m)) return NUMC_ERR_INVALID_ARG;
-    if (i >= m->rows || j >= m->cols) return fail_out_of_bounds();
-    m->data[i * m->cols + j] = val;
-    return NUMC_OK;
-}
-
 /* ---- addition / subtraction ------------------------------------------- */
-
-numc_status_t
-numc_vector_add(numc_vector_t a, numc_vector_t b, numc_vector_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_vector_is_valid(&a) || !numc_vector_is_valid(&b)) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    if (a.size != b.size) return fail_dim_mismatch();
-
-    numc_vector_t r;
-    r.magic = NUMC_VECTOR_MAGIC;
-    r.size = a.size;
-    r.data = malloc(a.size * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-    for (size_t i = 0; i < a.size; i++) r.data[i] = a.data[i] + b.data[i];
-    *out = r;
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_vector_sub(numc_vector_t a, numc_vector_t b, numc_vector_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_vector_is_valid(&a) || !numc_vector_is_valid(&b)) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    if (a.size != b.size) return fail_dim_mismatch();
-
-    numc_vector_t r;
-    r.magic = NUMC_VECTOR_MAGIC;
-    r.size = a.size;
-    r.data = malloc(a.size * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-    for (size_t i = 0; i < a.size; i++) r.data[i] = a.data[i] - b.data[i];
-    *out = r;
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_add(numc_matrix_t a, numc_matrix_t b, numc_matrix_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_matrix_is_valid(&a) || !numc_matrix_is_valid(&b)) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    if (a.rows != b.rows || a.cols != b.cols) return fail_dim_mismatch();
-
-    numc_matrix_t r;
-    r.magic = NUMC_MATRIX_MAGIC;
-    r.rows = a.rows;
-    r.cols = a.cols;
-    r.data = malloc(a.rows * a.cols * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-    for (size_t i = 0; i < a.rows * a.cols; i++) r.data[i] = a.data[i] + b.data[i];
-    *out = r;
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_sub(numc_matrix_t a, numc_matrix_t b, numc_matrix_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_matrix_is_valid(&a) || !numc_matrix_is_valid(&b)) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    if (a.rows != b.rows || a.cols != b.cols) return fail_dim_mismatch();
-
-    numc_matrix_t r;
-    r.magic = NUMC_MATRIX_MAGIC;
-    r.rows = a.rows;
-    r.cols = a.cols;
-    r.data = malloc(a.rows * a.cols * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-    for (size_t i = 0; i < a.rows * a.cols; i++) r.data[i] = a.data[i] - b.data[i];
-    *out = r;
-    return NUMC_OK;
-}
-
 
 numc_status_t
 numc_tensor_add(numc_tensor_t a, numc_tensor_t b, numc_tensor_t *out)
@@ -351,7 +149,6 @@ numc_tensor_add(numc_tensor_t a, numc_tensor_t b, numc_tensor_t *out)
     *out = r;
     return NUMC_OK;
 }
-
 
 numc_status_t
 numc_tensor_sub(numc_tensor_t a, numc_tensor_t b, numc_tensor_t *out)
@@ -376,39 +173,6 @@ numc_tensor_sub(numc_tensor_t a, numc_tensor_t b, numc_tensor_t *out)
 /* ---- scalar multiplication --------------------------------------------- */
 
 numc_status_t
-numc_vector_scale(numc_vector_t a, double scalar, numc_vector_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_vector_is_valid(&a)) return NUMC_ERR_INVALID_ARG;
-    numc_vector_t r;
-    r.magic = NUMC_VECTOR_MAGIC;
-    r.size = a.size;
-    r.data = malloc(a.size * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-    for (size_t i = 0; i < a.size; i++) r.data[i] = a.data[i] * scalar;
-    *out = r;
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_scale(numc_matrix_t a, double scalar, numc_matrix_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_matrix_is_valid(&a)) return NUMC_ERR_INVALID_ARG;
-    numc_matrix_t r;
-    r.magic = NUMC_MATRIX_MAGIC;
-    r.rows = a.rows;
-    r.cols = a.cols;
-    r.data = malloc(a.rows * a.cols * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-    for (size_t i = 0; i < a.rows * a.cols; i++) r.data[i] = a.data[i] * scalar;
-    *out = r;
-    return NUMC_OK;
-}
-
-
-numc_status_t
 numc_tensor_scale(numc_tensor_t a, double scalar, numc_tensor_t *out)
 {
     if (out == NULL) return NUMC_ERR_INVALID_ARG;
@@ -423,52 +187,7 @@ numc_tensor_scale(numc_tensor_t a, double scalar, numc_tensor_t *out)
     return NUMC_OK;
 }
 
-/* ---- products ----------------------------------------------------------- */
-
-numc_status_t
-numc_vector_dot(numc_vector_t a, numc_vector_t b, double *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_vector_is_valid(&a) || !numc_vector_is_valid(&b)) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    if (a.size != b.size) return fail_dim_mismatch();
-
-    double sum = 0.0;
-    for (size_t i = 0; i < a.size; i++) sum += a.data[i] * b.data[i];
-    *out = sum;
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_mul(numc_matrix_t a, numc_matrix_t b, numc_matrix_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_matrix_is_valid(&a) || !numc_matrix_is_valid(&b)) {
-        return NUMC_ERR_INVALID_ARG;
-    }
-    if (a.cols != b.rows) return fail_dim_mismatch();
-
-    numc_matrix_t r;
-    r.magic = NUMC_MATRIX_MAGIC;
-    r.rows = a.rows;
-    r.cols = b.cols;
-    r.data = malloc(r.rows * r.cols * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-
-    for (size_t i = 0; i < r.rows; i++) {
-        for (size_t j = 0; j < r.cols; j++) {
-            double sum = 0.0;
-            for (size_t k = 0; k < a.cols; k++)
-                sum += a.data[i * a.cols + k] * b.data[k * b.cols + j];
-            r.data[i * r.cols + j] = sum;
-        }
-    }
-    *out = r;
-    return NUMC_OK;
-}
-
+/* ---- contraction -------------------------------------------------------- */
 
 numc_status_t
 numc_tensor_contract(numc_tensor_t a, size_t axis_a, numc_tensor_t b, size_t axis_b, numc_tensor_t *out)
@@ -563,31 +282,7 @@ numc_tensor_contract(numc_tensor_t a, size_t axis_a, numc_tensor_t b, size_t axi
     return NUMC_OK;
 }
 
-/* ---- norms ---------------------------------------------------------- */
-
-numc_status_t
-numc_vector_norm(numc_vector_t a, double *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_vector_is_valid(&a)) return NUMC_ERR_INVALID_ARG;
-    double sum = 0.0;
-    for (size_t i = 0; i < a.size; i++) sum += a.data[i] * a.data[i];
-    *out = sqrt(sum);
-    return NUMC_OK;
-}
-
-
-numc_status_t
-numc_matrix_norm(numc_matrix_t a, double *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_matrix_is_valid(&a)) return NUMC_ERR_INVALID_ARG;
-    double sum = 0.0;
-    for (size_t i = 0; i < a.rows * a.cols; i++) sum += a.data[i] * a.data[i];
-    *out = sqrt(sum);
-    return NUMC_OK;
-}
-
+/* ---- norm ---------------------------------------------------------------- */
 
 numc_status_t
 numc_tensor_norm(numc_tensor_t a, double *out)
@@ -602,26 +297,6 @@ numc_tensor_norm(numc_tensor_t a, double *out)
 }
 
 /* ---- transpose -------------------------------------------------------- */
-
-numc_status_t
-numc_matrix_transpose(numc_matrix_t a, numc_matrix_t *out)
-{
-    if (out == NULL) return NUMC_ERR_INVALID_ARG;
-    if (!numc_matrix_is_valid(&a)) return NUMC_ERR_INVALID_ARG;
-    numc_matrix_t r;
-    r.magic = NUMC_MATRIX_MAGIC;
-    r.rows = a.cols;
-    r.cols = a.rows;
-    r.data = malloc(r.rows * r.cols * sizeof(double));
-    if (r.data == NULL) return NUMC_ERR_ALLOC;
-
-    for (size_t i = 0; i < r.rows; i++)
-        for (size_t j = 0; j < r.cols; j++)
-            r.data[i * r.cols + j] = a.data[j * a.cols + i];
-    *out = r;
-    return NUMC_OK;
-}
-
 
 numc_status_t
 numc_tensor_transpose(numc_tensor_t a, const size_t *permutation, numc_tensor_t *out)

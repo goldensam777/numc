@@ -13,9 +13,11 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
+#include "test_bilinear.h"
 #include "test_complex.h"
-#include "test_multilinear.h"
 #include "test_status.h"
+#include "test_tensorial.h"
+#include "test_vector.h"
 
 
 int
@@ -25,7 +27,9 @@ main(void)
 
     failures += numc_status_tests_run();
     failures += numc_complex_tests_run();
-    failures += numc_multilinear_tests_run();
+    failures += numc_vector_tests_run();
+    failures += numc_bilinear_tests_run();
+    failures += numc_tensorial_tests_run();
 
     /* Ajoute ici tes prochains groupes de tests, ex. :
      * failures += numc_lin_alg_tests_run();

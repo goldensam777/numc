@@ -18,8 +18,10 @@
 #define NUMC_H
 
 #include "complex.h"
-#include "multilinear.h"
+#include "numc_bilinear.h"
 #include "numc_status.h"
+#include "numc_tensorial.h"
+#include "numc_vector.h"
 #include "numc_version.h"
 
 #endif /* NUMC_H */
