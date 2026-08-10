@@ -20,6 +20,14 @@ et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
     Frobenius, `transpose` par permutation).
   - Les trois types partagent la meme convention d'ownership (les
     `numc_*_from` copient les donnees).
+- **Applications matricielles** (`numc_bilinear.h`) :
+  - `numc_matrix_vec_mul` : produit matrice-vecteur `y = M * x` (avec
+    controle des dimensions) ;
+  - `numc_linear_map_t` : application affine parametree `f(x) = M * x + u`
+    (`from`, `destroy`, `is_valid`, `apply` avec checks de validite et de
+    dimensions) ;
+  - `numc_affine_map_t` : application affine centree `f(x) = M * (x - u) + v`
+    (`from`, `destroy`, `is_valid`, `apply`).
 - **Nouveaux codes d'erreur** : `NUMC_ERR_DIM_MISMATCH` et
   `NUMC_ERR_OUT_OF_BOUNDS`, messages associes dans `numc_status_string()`.
 - **Fiabilisation** : chaque objet porte un tag `magic` (pose par
@@ -29,8 +37,8 @@ et ce projet respecte le [Semantic Versioning](https://semver.org/lang/fr/).
 - **Integration continue** : workflow GitHub Actions (gcc et clang) qui
   compile, lance les tests et le controle de fuites valgrind
   (`--error-exitcode=1`).
-- **Tests** : 66 tests unitaires (5 noyau, 41 complexes, 8 vecteurs,
-  5 matrices, 7 tenseurs).
+- **Tests** : 73 tests unitaires (5 noyau, 41 complexes, 8 vecteurs,
+  12 matrices, 7 tenseurs).
 
 ### A venir
 

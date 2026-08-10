@@ -5,7 +5,9 @@
 
 /* Tag stamped in the magic field by numc_matrix_from() and cleared by
  * numc_matrix_destroy(). Checked by numc_matrix_is_valid(). */
-#define NUMC_MATRIX_MAGIC 0x4D545258u /* 'MTRX' */
+#define NUMC_MATRIX_MAGIC 0x4D545258u     /* 'MTRX' */
+#define NUMC_LINEAR_MAP_MAGIC 0x4C4E4D50u /* 'LNMP' */
+#define NUMC_AFFINE_MAP_MAGIC 0x4146464Eu /* 'AFFN' */
 
 /* Error helpers: record a message via numc_set_error() and return the code. */
 static numc_status_t
@@ -189,3 +191,180 @@ numc_matrix_transpose(numc_matrix_t a, numc_matrix_t *out)
     *out = r;
     return NUMC_OK;
 }
+
+numc_status_t
+numc_matrix_vec_mul(numc_matrix_t m, numc_vector_t v, numc_vector_t *out)
+{
+    if (out == NULL || !numc_matrix_is_valid(&m) || !numc_vector_is_valid(&v)) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+    if (m.cols != v.size) {
+        return fail_dim_mismatch();
+    }
+
+    double *buf = malloc(m.rows * sizeof(double));
+    if (buf == NULL) {
+        return NUMC_ERR_ALLOC;
+    }
+
+    for (size_t i = 0; i < m.rows; i++) {
+        double sum = 0.0;
+        for (size_t j = 0; j < m.cols; j++) {
+            sum += m.data[i * m.cols + j] * v.data[j];
+        }
+        buf[i] = sum;
+    }
+
+    numc_status_t st = numc_vector_from(m.rows, buf, out);
+    free(buf);
+    return st;
+}
+
+numc_status_t
+numc_linear_map_from(numc_matrix_t matrix, numc_vector_t u, numc_linear_map_t *out)
+{
+    if (out == NULL || !numc_matrix_is_valid(&matrix) || !numc_vector_is_valid(&u)) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+    if (u.size != matrix.rows) {
+        return fail_dim_mismatch();
+    }
+
+    numc_linear_map_t map;
+    map.magic = NUMC_LINEAR_MAP_MAGIC;
+
+    numc_status_t st = numc_matrix_from(matrix.rows, matrix.cols, matrix.data, &map.matrix);
+    if (st != NUMC_OK) {
+        return st;
+    }
+
+    st = numc_vector_from(u.size, u.data, &map.u);
+    if (st != NUMC_OK) {
+        numc_matrix_destroy(&map.matrix);
+        return st;
+    }
+
+    *out = map;
+    return NUMC_OK;
+}
+
+void
+numc_linear_map_destroy(numc_linear_map_t *map)
+{
+    if (map == NULL) return;
+    numc_matrix_destroy(&map->matrix);
+    numc_vector_destroy(&map->u);
+    map->magic = 0;
+}
+
+bool
+numc_linear_map_is_valid(const numc_linear_map_t *map)
+{
+    return map != NULL && map->magic == NUMC_LINEAR_MAP_MAGIC &&
+           numc_matrix_is_valid(&map->matrix) && numc_vector_is_valid(&map->u);
+}
+
+numc_status_t
+numc_linear_map_apply(const numc_linear_map_t *map, numc_vector_t x, numc_vector_t *out)
+{
+    if (out == NULL || !numc_linear_map_is_valid(map) || !numc_vector_is_valid(&x)) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+    if (x.size != map->matrix.cols) {
+        return fail_dim_mismatch();
+    }
+
+    numc_vector_t mx;
+    numc_status_t st = numc_matrix_vec_mul(map->matrix, x, &mx);
+    if (st != NUMC_OK) {
+        return st;
+    }
+
+    st = numc_vector_add(mx, map->u, out);
+    numc_vector_destroy(&mx);
+    return st;
+}
+
+numc_status_t
+numc_affine_map_from(numc_matrix_t matrix, numc_vector_t u, numc_vector_t v, numc_affine_map_t *out)
+{
+    if (out == NULL || !numc_matrix_is_valid(&matrix) ||
+        !numc_vector_is_valid(&u) || !numc_vector_is_valid(&v)) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+    if (u.size != matrix.cols || v.size != matrix.rows) {
+        return fail_dim_mismatch();
+    }
+
+    numc_affine_map_t map;
+    map.magic = NUMC_AFFINE_MAP_MAGIC;
+
+    numc_status_t st = numc_matrix_from(matrix.rows, matrix.cols, matrix.data, &map.matrix);
+    if (st != NUMC_OK) {
+        return st;
+    }
+
+    st = numc_vector_from(u.size, u.data, &map.u);
+    if (st != NUMC_OK) {
+        numc_matrix_destroy(&map.matrix);
+        return st;
+    }
+
+    st = numc_vector_from(v.size, v.data, &map.v);
+    if (st != NUMC_OK) {
+        numc_matrix_destroy(&map.matrix);
+        numc_vector_destroy(&map.u);
+        return st;
+    }
+
+    *out = map;
+    return NUMC_OK;
+}
+
+void
+numc_affine_map_destroy(numc_affine_map_t *map)
+{
+    if (map == NULL) return;
+    numc_matrix_destroy(&map->matrix);
+    numc_vector_destroy(&map->u);
+    numc_vector_destroy(&map->v);
+    map->magic = 0;
+}
+
+bool
+numc_affine_map_is_valid(const numc_affine_map_t *map)
+{
+    return map != NULL && map->magic == NUMC_AFFINE_MAP_MAGIC &&
+           numc_matrix_is_valid(&map->matrix) &&
+           numc_vector_is_valid(&map->u) &&
+           numc_vector_is_valid(&map->v);
+}
+
+numc_status_t
+numc_affine_map_apply(const numc_affine_map_t *map, numc_vector_t x, numc_vector_t *out)
+{
+    if (out == NULL || !numc_affine_map_is_valid(map) || !numc_vector_is_valid(&x)) {
+        return NUMC_ERR_INVALID_ARG;
+    }
+    if (x.size != map->matrix.cols) {
+        return fail_dim_mismatch();
+    }
+
+    numc_vector_t x_shifted;
+    numc_status_t st = numc_vector_sub(x, map->u, &x_shifted);
+    if (st != NUMC_OK) {
+        return st;
+    }
+
+    numc_vector_t mx;
+    st = numc_matrix_vec_mul(map->matrix, x_shifted, &mx);
+    numc_vector_destroy(&x_shifted);
+    if (st != NUMC_OK) {
+        return st;
+    }
+
+    st = numc_vector_add(mx, map->v, out);
+    numc_vector_destroy(&mx);
+    return st;
+}
+
