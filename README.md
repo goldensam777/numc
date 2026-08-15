@@ -1,8 +1,8 @@
 # numc
 
-Bibliotheque de calcul scientifique en C, conçue pour etre construite et
-enrichie au fil de l'apprentissage : algebre lineaire et bilineaire,
-mesure et integration, probabilites, jusqu'a la mecanique quantique.
+Bibliothèque de calcul scientifique en C, conçue pour être construite et
+enrichie au fil de l'apprentissage : algèbre linéaire et bilinéaire,
+mesure et integration, probabilites, jusqu'a la mécanique quantique.
 
 ## Pre-requis
 
@@ -76,7 +76,7 @@ et un groupe de tests dans `test/test_<module>.c`.
       produit, norme, transpose
 - [x] tenseurs (`numc_tensorial.h`) : construction, add/sub, scale,
       contraction, norme, transpose par permutation
-- [ ] algebre bilineaire : formes bilineaires, formes quadratiques, formes hermitiennes
+- [x] algebre bilineaire : formes bilineaires, formes quadratiques, formes hermitiennes
 - [ ] mesure et integration : quadrature numerique (Riemann, trapeze, Simpson, Gauss-Legendre)
 - [ ] probabilites et statistiques : lois usuelles, moments, Monte Carlo
 - [ ] mecanique quantique : espaces de Hilbert, operateurs, valeurs propres
