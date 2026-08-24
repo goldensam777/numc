@@ -1,4 +1,4 @@
-# numc
+# logariasmós
 
 Bibliothèque de calcul scientifique en C, conçue pour être construite et
 enrichie au fil de l'apprentissage : algèbre linéaire et bilinéaire,
